@@ -1,0 +1,6 @@
+.git/
+^\.github$
+^LICENSE\.md$
+^\docs$
+^latinR$
+^docs$
