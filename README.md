@@ -1,4 +1,5 @@
-La implementación vieja (srvyuRu) se encuentra en https://github.com/mauroloprete/srvyuRu
+# La implementación vieja (srvyuRu) se encuentra en https://github.com/mauroloprete/srvyuRu
+# Presentación en latinR: https://www.youtube.com/watch?v=nw46EQPyLGw&ab_channel=LatinR
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/tidy_eaii)](https://CRAN.R-project.org/package=tidy_eaii)
 
