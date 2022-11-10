@@ -1,4 +1,4 @@
-La implementación vieja (srvyuRu) se encuentra en (https://github.com/mauroloprete/srvyuRu)[aquí]
+La implementación vieja (srvyuRu) se encuentra en https://github.com/mauroloprete/srvyuRu
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/tidy_eaii)](https://CRAN.R-project.org/package=tidy_eaii)
 
