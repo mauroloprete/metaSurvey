@@ -1,0 +1,834 @@
+---
+title : srvyuRu-metaSurvey
+subtitle : RLadies & Guru
+author : Mauro Loprete
+date : 29 de noviembre 2022
+output : 
+  xaringan::moon_reader:
+   css : ["xaringan-themer.css","custom.css"]   
+   lib_dir : libs
+   includes:
+    after_body: insert-logo.html
+   nature :
+     ratio : "16:9"
+     highlightStyle: github
+     slideNumberFormat: '%current%'
+     highlightLines: true
+     countIncrementalSlides: false
+
+---
+
+```{r setup, include = F , warning = F }
+if(!require(pacman)) {
+  install.packages("pacman")
+}
+
+library(xaringanthemer)
+
+pacman::p_load(
+  RefManageR
+)
+
+#Libreria car 
+pacman::p_load_gh(
+  "gadenbuie/xaringanExtra"
+)
+# Configuración del tema Xaringan:
+style_duo_accent(
+  primary_color = "#010788",
+  secondary_color = "#01B5FE",
+  header_font_google = google_font("Titillium Web", "600"),
+   text_font_google   = google_font("Crimson Pro", "300", "300i"),
+   code_font_google   = google_font("IBM Plex Mono"),
+   base_font_size = "20px",
+   text_font_size = "1rem",
+   code_font_size = "0.6rem",
+   code_inline_font_size = "1.2em",
+   footnote_font_size = "0.6em",
+   header_h1_font_size = "1.7rem",
+   header_h2_font_size = "1.50rem",
+   header_h3_font_size = "1.2rem"
+)
+
+xaringanExtra::use_xaringan_extra(
+  c(
+    "tile_view",
+    "panelset",
+    "progress_bar"
+  )
+)
+
+
+xaringanExtra::style_panelset_tabs(
+  active_foreground = "#0051BA",
+  hover_foreground = "#d22",
+  font_family = "Roboto"
+)
+
+xaringanExtra::use_banner(
+  bottom_left = "bit.ly/my-awesome-talk",
+  exclude = "title-slide"
+)
+
+xaringanExtra::style_banner(
+  text_color = "#1874CD",
+  background_color = "#F0F8FF"
+)
+
+
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  warning = F, 
+  echo = F ,
+  out.width = "450px",
+  dpi = 200, 
+  fig.retina =2
+)
+
+
+if(!require(pacman)) {
+  install.packages("pacman")
+}
+
+
+hook_source <- knitr::knit_hooks$get('source')
+knitr::knit_hooks$set(source = function(x, options) {
+  x <- stringr::str_replace(x, "^[[:blank:]]?([^*].+?)[[:blank:]]*#<<[[:blank:]]*$", "*\\1")
+  hook_source(x, options)
+})
+
+# rbib <- ReadBib(
+#   here::here("packages.bib"),
+#   check = FALSE,
+#   .Encoding = "UTF-8"
+# )
+
+BibOptions(
+  check.entries = FALSE,
+  bib.style = "authortitle",
+  cite.style = "alphabetic",
+  style = "markdown",
+  hyperlink = FALSE,
+  max.names = 2,
+  dashed = FALSE
+)
+
+options(kableExtra.latex.load_packages = FALSE)
+```
+
+
+class: header_background
+
+# Guía
+
+- ### Metaprogramación
+
+--
+
+- ### Justificación
+
+--
+
+  - #### Dependencias de R
+      - **R6**
+      - **glue**
+      - **httr**
+      - **survey**
+      - **foreign**
+
+--
+
+- ### Ejemplos
+
+--
+
+- ### srvyuRu a metaSurvey
+
+--
+
+- ### metaSurvey versión públcia y CRAN
+
+---
+
+class: header_background
+
+# Metaprogramación
+
+
+- ## Code is data
+
+
+.panelset[
+.panel[.panel-name[ech]
+.scroll-box-12[
+
+```{r,eval = FALSE,echo = TRUE}
+
+employment <- function(data = ech::toy_ech_2018,
+                       pobpcoac = "pobpcoac") {
+
+# checks ---
+  assertthat::assert_that(is.data.frame(data), msg = glue::glue("Sorry... :( \n  is not a data.frame"))
+  assertthat::assert_that(pobpcoac %in% names(data), msg = glue::glue("Sorry... :( \n  {popbcoac} is not in data"))
+
+# variables ---
+  data <- data %>% dplyr::mutate(pea = ifelse(pobpcoac %in% 2:5, 1, 0),
+                          pet = ifelse(pobpcoac != 1, 1, 0),
+                          po  = ifelse(pobpcoac == 2, 1, 0),
+                          pd  = ifelse(pobpcoac %in% 3:5, 1, 0),
+                          pea = haven::labelled(pea, labels = c("Si" = 1, "No" = 0),
+                                                label = "Poblacion economicamente activa"),
+                          pet = haven::labelled(pet, labels = c("Si" = 1, "No" = 0),
+                                                label = "Poblacion en edad de trabajar"),
+                          po = haven::labelled(po, labels = c("Si" = 1, "No" = 0),
+                                               label = "Poblacion ocupada"),
+                          pd = haven::labelled(pd, labels = c("Si" = 1, "No" = 0),
+                                               label = "Poblacion desocupada")
+  )
+
+  message("Variables have been created: \n \t pea (Poblacion economicamente activa);
+         pet (Poblacion en edad de trabajar);
+         po (Poblacion ocupada) &
+         pd (Poblacion desocupada)")
+  return(data)
+}
+
+```
+
+]
+
+Tomado de [github/ech] (https://github.com/calcita/ech/blob/master/R/employment.R)
+
+]
+
+.panel[.panel-name[eph]
+.scroll-box-12[
+```{r,eval = FALSE,echo = TRUE}
+
+calculate_poverty <- function(base,basket,print_summary=TRUE,window = "quarter",group_vars =c()){
+
+  base <- base %>%
+    dplyr::mutate(periodo = paste(ANO4, TRIMESTRE, sep='.')) %>%
+    dplyr::left_join(., adulto_equivalente, by = c("CH04", "CH06")) %>%
+    dplyr::left_join(., basket, by = c('REGION'="codigo", "periodo")) %>%
+    dplyr::group_by(CODUSU, NRO_HOGAR, periodo)                          %>%
+    dplyr::mutate(adequi_hogar = sum(adequi))                            %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(CBA_hogar = CBA*adequi_hogar,
+                  CBT_hogar = CBT*adequi_hogar,
+                  situacion = dplyr::case_when(ITF<CBA_hogar            ~ 'indigente',
+                                               ITF>=CBA_hogar & ITF<CBT_hogar ~ 'pobre',
+                                               ITF>=CBT_hogar           ~ 'no_pobre'),
+                  situacion = dplyr::case_when(PONDIH==0 ~ NA_character_, #excluyo los casos que no tienen respuesta en ITF
+                                               TRUE ~ situacion)) %>%
+    dplyr::select(-adequi,-periodo,-CBA, -CBT)
+
+  if (print_summary) {
+    if(window == "quarter"){
+      Pobreza_resumen <- base %>%
+        dplyr::group_by(ANO4,TRIMESTRE,dplyr::across(c({{group_vars}}))) %>%
+        dplyr::summarise(Tasa_pobreza    = sum(PONDIH[situacion %in% c('pobre', 'indigente')],na.rm = TRUE)/
+                           sum(PONDIH,na.rm = TRUE),
+                         Tasa_indigencia = sum(PONDIH[situacion == 'indigente'],na.rm = TRUE)/
+                           sum(PONDIH,na.rm = TRUE))
+    }
+    else {
+      Pobreza_resumen <- base %>%
+        dplyr::mutate(SEMESTRE = ifelse(TRIMESTRE %in% c(1,2),yes = 1,no = 2)) %>%
+        dplyr::group_by(ANO4,SEMESTRE,dplyr::across(c({{group_vars}}))) %>%
+        dplyr::summarise(Tasa_pobreza    = sum(PONDIH[situacion %in% c('pobre', 'indigente')],na.rm = TRUE)/
+                           sum(PONDIH,na.rm = TRUE),
+                         Tasa_indigencia = sum(PONDIH[situacion == 'indigente'],na.rm = TRUE)/
+                           sum(PONDIH,na.rm = TRUE))
+
+    }
+
+
+    print(Pobreza_resumen)
+
+  }
+  return(base)
+}
+
+```
+]
+
+Tomado de [github/eph] (https://github.com/holatam/eph/blob/master/R/calculate_poverty.R)
+]
+
+
+.panel[
+.panel-name[srvyuRu]
+.scroll-box-12[
+```{r,echo = TRUE,eval = FALSE}
+
+library(srvyuRu)
+
+load_base.(
+ .dir = here::here(
+   "P_2019_Terceros.sav"
+ )
+) %>%
+load_recipes_ech.(
+ .ech = "2019",
+ .recipe = "labor"
+) %>%
+set_weight.(
+  .weight = "pesoano"
+) %>%
+stats_ratio.(
+  po,
+  pd,
+  .by = c("nomdpto","e26")
+)
+
+
+```
+]
+]
+
+.panel[
+.panel-name[srvyuRu (2)]
+
+.scroll-box-12[
+```{r,echo = TRUE,eval = FALSE}
+
+library(srvyuRu)
+
+load_base.(
+ .dir = here::here(
+   "P_2019_Terceros.sav"
+ )
+) %>%
+estimate_labor_indicators.(
+ .ech = "2019",
+ .by = c("nomdpto","e26")
+)
+
+
+```
+]
+
+
+]
+
+
+.panel[
+.panel-name[srvyuRu (3)]
+
+.scroll-box-12[
+
+```{r,echo = TRUE,eval=FALSE}
+
+
+wl.Series <- get_series.(
+  srvy_name = list(
+    ech_2011 = "data-raw/ech/P_2011_TERCEROS.sav",
+    ech_2012 = "data-raw/ech/P_2012_TERCEROS.sav",
+    ech_2013 = "data-raw/ech/P_2013_Terceros.sav",
+    ech_2014 = "data-raw/ech/P_2014_Terceros.sav",
+    ech_2015 = "data-raw/ech/P_2015_Terceros.sav",
+    ech_2016 = "data-raw/ech/P_2016_Terceros.sav",
+    ech_2017 = "data-raw/ech/P_2017_Terceros.sav",
+    ech_2018 = "data-raw/ech/P_2018_Terceros.sav",
+    ech_2019 = "data-raw/ech/P_2019_Terceros.sav",
+    ech_2020 = "data-raw/ech/HyP_2020_Terceros.sav",
+    ech_2021 = c(
+        "data-raw/ech/ECH_2021_sem1_terceros.csv",
+        "data-raw/ech/ECH_07_2021.csv",
+        "data-raw/ech/ECH_08_2021.csv",
+        "data-raw/ech/ECH_09_2021.csv",
+        "data-raw/ech/ECH_10_2021.csv",
+        "data-raw/ech/ECH_11_2021.csv",
+        "data-raw/ech/ech_12_2021.csv"
+      )
+    ),
+  type = "ech",
+  easy_fun = "labor_indicators",
+  by = "genre"
+)
+
+```
+
+]
+
+
+]
+
+
+.panel[
+.panel-name[Impelementación]
+
+.scroll-box-12[
+```{r,echo = TRUE}
+
+srvyuRu::load_recipes_ech.
+
+srvyuRu::load_recipes_from_db.
+
+```
+
+]
+]
+
+]
+
+
+---
+
+class: header_background
+
+# Metaprogramación
+
+- ## Code can generate code
+
+.panelset[
+.panel[.panel-name[Crear recetas]
+
+.scroll-box-12[
+```{r,echo = TRUE}
+
+
+srvyuRu::new_recipe
+
+```
+
+]
+
+No me convence **rlang**
+
+]
+
+
+.panel[.panel-name[Mercado de trabajo]
+.scroll-box-12[
+```{r,echo = TRUE,eval = FALSE}
+
+
+mercado_trabajo <- srvyuRu::new_recipe(
+  .type = "ech",
+  .ed = 2006:2021,
+  steps = srvyuRu::steps(
+    srvyuRu::step_recode(
+      pet,
+      as.numeric(
+        pobpcoac != 1
+      )
+    ),
+    srvyuRu::step_recode(
+      po,
+      as.numeric(
+        pobpcoac == 2
+      )
+    ),
+    srvyuRu::step_recode(
+      pd,
+      as.numeric(
+        pobpcoac %in% 3:5
+      )
+    )
+  )
+)
+
+
+```
+
+]
+
+La receta fue tomada del paquete **ech** del cual me inspire.
+
+]
+
+.panel[.panel-name[Informalidad]
+.scroll-box-12[
+
+```{r,echo = TRUE,eval = FALSE}
+
+
+# Aporte de Fabricio Machado
+
+mercado_trabajo <- mercado_trabajo %>% add_steps(
+  srvyuRu::step_recode(
+    inf,
+    as.numeric(
+      f82 == 1
+    )
+  ),
+  srvyuRu::step_recode(
+    cp,
+    as.numeric(f73 %in% 5:6)
+  )
+)
+
+
+```
+
+]
+
+
+**add_steps** gran uso de memoria
+
+
+]
+
+]
+
+---
+
+class: header_background
+
+# Algunas recetas
+
+- ## <font color = #00000> Encuesta de actividades de innovación: <font>
+  - **Porcentaje de empresas que realizan innovación**
+  - **Porcentaje de empresas que realizan innovación por tipo de actividad**
+  - **Inversión en actividades de innovación**
+  - ...
+- ## <font color = #00000> Encuesta continua de hogares <font>
+  - **Mercado de trabajo**
+  - **Brecha de género en el mercado de trabajo**
+  - **Nivel educativo máximo alcanzado**
+
+---
+
+class: header_background
+
+# Justificación de uso público
+
+- ## <font color = #00000> Existen los microdatos, gente que sabe R, gente explota al máximo el uso de encuestas, gente que sabe de muestreo, pero cuantos saben de todas?<font>
+- ## <font color = #00000> Uso de software no libres <font>
+- ## <font color = #00000> Reproducibibilidad de resultados <font>
+- ## <font color = #00000> Mantenimiento en el tiempo <font>
+
+
+---
+
+class: header_background
+
+# Ej: Innovación por tipo
+
+.scroll-box-20[
+
+```{r,echo = TRUE,eval = FALSE}
+
+innovacion_tipo <- srvyuRu::new_recipe(
+  .type = "eai",
+  steps = srvyuRu::steps(
+    srvyuRu::step_recode(
+      producto,
+      srvyuRu::if_any(
+        d_111a,
+        d_121a,
+        d_131a,
+        d_141a,
+        d_151a,
+        d_161a
+      ) ~ .x == 1,
+      .ed = "1998-2000"
+    ),
+    srvyuRu::step_recode(
+      proceso,
+      srvyuRu::if_any(
+        d_112a,
+        d_122a,
+        d_132a,
+        d_142a,
+        d_152a,
+        d_162a,
+        d_113a,
+        d_123a,
+        d_133a,
+        d_143a,
+        d_153a,
+        d_163a,
+        d_114a,
+        d_124a,
+        d_134a,
+        d_144a,
+        d_154a,
+        d_164a
+      ) ~ .x == 1,
+      .ed = "1998-2000"
+    ),
+    srvyuRu::step_recode(
+      producto,
+      as.numeric(e1_1a == 1),
+      .ed = "2001-2003"
+    ),
+    srvyuRu::step_recode(
+      proceso,
+      if_any(
+        e1_2a,
+        e1_3a,
+        e1_4a
+      ) ~ .x == 1,
+      .ed = "2001-2003"
+    ),
+    srvyuRu::step_recode(
+      producto,
+      as.numeric(E_1_1_A == 1),
+      .ed = c(
+        "2004-2006",
+        "2007-2009"
+      )
+    ),
+    srvyuRu::step_recode(
+      proceso,
+      srvyuRu::if_any(
+        E_1_2_A,
+        E_1_3_A,
+        E_1_4_A
+      ) ~ .x == 1,
+      .ed = c(
+        "2004-2006",
+        "2007-2009"
+      )
+    ),
+    srvyuRu::step_recode(
+      producto,
+      as.numeric(E1_1_1 == 1),
+      .ed = c(
+        "2010-2012",
+        "2013-2015"
+      )
+    ),
+    srvyuRu::step_recode(
+      proceso,
+      if_any(
+        E1_2_1,
+        E1_3_1,
+        E1_4_1
+      ) ~ .x == 1,
+      .ed = c(
+        "2010-2012",
+        "2013-2015"
+      )
+    ),
+    srvyuRu::step_recode(
+      producto,
+      as.numeric(RAI_E.1_1 == 1),
+      .ed = "2016-2018"
+    ),
+    srvyuRu::step_recode(
+      proceso,
+      as.numeric(RAI_E.1_2 == 1),
+      .ed = "2016-2018"
+    )
+  )
+)
+
+
+```
+
+]
+
+
+Mas ejemplos de la EAI y de la ECH, ejemplo clave la variable sexo.
+
+
+---
+
+class: inverse,middle
+
+# srvyuRu a metaSurvey ¿¿¿...???
+
+
+
+---
+
+class: header_background
+
+# Problemas de Impelementación
+
+- ## <font color = #00000>  Las recetas no deberían de ser funciones... <font>
+- ## <font color = #00000>  Una base de datos relacional (filas, columnas) no es lo mejor para guardar archivos JSON, si bien postgres lo soporta <font>
+- ## <font color = #00000>  Un usuario público a la base de datos puede ser una buena idea, pero ... <font>
+- ## <font color = #00000>  Dependencias: Chau rlang, haven, shiny* y más <font>
+- ## <font color = #00000>  Formalizar conceptos sobre estimadores, varianza, estimación en áreas pequeñas, confiabilidad, un largo etc <font>
+
+---
+
+
+class: inverse,middle
+
+# Por partes
+
+
+- ## metaSurvey
+
+- ## metaSurvey.api_recipes
+
+- ## metaSurvey.api
+
+- ## metaSurvey.interactive
+
+---
+
+
+class: header_background
+
+
+# metaSurvey
+
+
+.panelset[
+.panel[.panel-name[Uso]
+
+  - ### Crear, modificar, cargar recetas
+  - ### Elegir diferentes 'diseños'
+  - ### Funciones step_*
+  - ### Funciones para esimar indicadores a lo largo del tiempo
+  - ### Unificar carga de archivos con diferentes extensiones
+  - ### *Enviar recetas*, *Consultar recetas*, *Visualizar recetas*
+]
+
+.panel[.panel-name[Estimaciones]
+
+
+  Si bien el papel principal del **metaSurvey** es brindar apoyo en la construcción de variables, para usuarios sin experiencia en muestreo no es mala idea considerar:
+
+  - ### Estimación de varianzas. En el caso de la **ECH** solo en las ultimas ediciones se incluyen las replicas boostrap de los ponderadores. ¿Considerar un diseño bernulli? --> NO.
+  - ### Estabilidad de estimaciones. Similar al paquete **calidad** se Chile que considera coeficientes de variación. -->  El INE de Uruguay lo considera en sus publicaciones.
+  - ### Estimadores de medias moviles para el nuevo diseño de la **ECH**
+
+
+]
+
+.panel[.panel-name[R6]
+
+
+.scroll-box-18[
+```{r,eval = FALSE, echo = TRUE}
+
+step <- R6::R6Class(
+    "recipe",
+    public = list(
+        survey = NULL,
+        edition = NULL,
+        user = NULL,
+        dependence = NULL,
+        engine = NULL,
+        initialize = function(...) {
+            Map(
+                f = function(item) {
+                    self$add(item)
+                },
+                list(...)
+            )
+        },
+        add = function(x) {
+            private$recipe <- c(private$recipe,list(x))
+        },
+        get_name = function() self$name,
+        print = function(...) {
+            cat("Receta ", self$get_name(), " elements\n", sep = "")
+        }
+    )
+)
+```
+
+]
+]
+
+.panel[.panel-name[glue]
+
+```{r,echo = TRUE}
+
+
+
+glue::glue(
+  ".df %>%
+    {fun}(
+      {variable},
+      {formula}
+    )",
+  fun = "recode",
+  variable = "sexo",
+  formula = "e26 == 1,'Masculino',TRUE ~ 'Femenino'"
+)
+
+
+```
+
+
+]
+]
+
+
+
+---
+
+class: header_background
+
+# metaSurvey.api_recipes
+
+.vertical-center[
+- ### Alojar recetas en mongoDB
+- ### API con express
+- ### Crear diferentes usuarios
+- ### Mantenibilidad en el tiempo, no depender de PR o MR e instalación de versiones 'menores' para obtener nuevas recetas
+]
+---
+
+
+class: header_background
+
+# metaSurvey.api
+
+.vertical-center[
+- ### API con plumber
+- ### Arrojar resultados de encuestas usando metaSurvey
+- ### Visualizador de mercado de trabajo del INE
+- ### Portal PRISMA de la ANII
+- ### ...
+]
+---
+
+class: header_background
+
+# metaSurvey.interactive
+
+
+.vertical-center[
+- ### Replicar el mismo workflow de trabajo con metaSurvey pero con interfaz interactiva
+- ### Widget de RStudio para usuarios de SPSS, replicando el querido 'Crear Variable'
+]
+
+---
+
+class: header_background
+
+# metaSurvey versión pública
+
+
+.vertical-center[
+  ## ¡Va a ser mi TFG!
+]
+
+---
+
+class: header_background
+
+# Paquetes en los que me inspire o utilice
+
+
+
+
+
+
+---
+
+.vertical-center[
+  .center[
+    # ¿Preguntas?
+  ]
+]
+
+
+---
+
+.vertical-center[
+  .center[
+    # Gracias!!
+  ]
+]

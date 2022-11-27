@@ -1,0 +1,811 @@
+---
+title : srvyuRu-metaSurvey
+subtitle : RLaides & Guru
+author : Mauro Loprete
+date : Noviembre 2022
+output : 
+  xaringan::moon_reader:
+   css : ["xaringan-themer.css","custom.css"]   
+   lib_dir : libs
+   includes:
+    after_body: insert-logo.html
+   nature :
+     ratio : "16:9"
+     highlightStyle: github
+     slideNumberFormat: '%current%'
+     highlightLines: true
+     countIncrementalSlides: false
+
+---
+
+```{r setup, include = F , warning = F }
+if(!require(pacman)) {
+  install.packages("pacman")
+}
+
+library(xaringanthemer)
+
+pacman::p_load(
+  RefManageR
+)
+
+#Libreria car 
+pacman::p_load_gh(
+  "gadenbuie/xaringanExtra"
+)
+# Configuración del tema Xaringan:
+style_duo_accent(
+  primary_color = "#010788",
+  secondary_color = "#01B5FE",
+  header_font_google = google_font("Titillium Web", "600"),
+   text_font_google   = google_font("Crimson Pro", "300", "300i"),
+   code_font_google   = google_font("IBM Plex Mono"),
+   base_font_size = "20px",
+   text_font_size = "1rem",
+   code_font_size = "0.6rem",
+   code_inline_font_size = "1.2em",
+   footnote_font_size = "0.6em",
+   header_h1_font_size = "1.7rem",
+   header_h2_font_size = "1.50rem",
+   header_h3_font_size = "1.2rem"
+)
+
+xaringanExtra::use_xaringan_extra(
+  c(
+    "tile_view",
+    "panelset",
+    "progress_bar"
+  )
+)
+
+
+xaringanExtra::style_panelset_tabs(
+  active_foreground = "#0051BA",
+  hover_foreground = "#d22",
+  font_family = "Roboto"
+)
+
+xaringanExtra::use_banner(
+  bottom_left = "bit.ly/my-awesome-talk",
+  exclude = "title-slide"
+)
+
+xaringanExtra::style_banner(
+  text_color = "#1874CD",
+  background_color = "#F0F8FF"
+)
+
+
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  warning = F, 
+  echo = F ,
+  out.width = "450px",
+  dpi = 200, 
+  fig.retina =2
+)
+
+
+if(!require(pacman)) {
+  install.packages("pacman")
+}
+
+
+hook_source <- knitr::knit_hooks$get('source')
+knitr::knit_hooks$set(source = function(x, options) {
+  x <- stringr::str_replace(x, "^[[:blank:]]?([^*].+?)[[:blank:]]*#<<[[:blank:]]*$", "*\\1")
+  hook_source(x, options)
+})
+
+# rbib <- ReadBib(
+#   here::here("packages.bib"),
+#   check = FALSE,
+#   .Encoding = "UTF-8"
+# )
+
+BibOptions(
+  check.entries = FALSE,
+  bib.style = "authortitle",
+  cite.style = "alphabetic",
+  style = "markdown",
+  hyperlink = FALSE,
+  max.names = 2,
+  dashed = FALSE
+)
+
+options(kableExtra.latex.load_packages = FALSE)
+```
+
+
+class: header_background
+
+# Guía
+
+- ### Metaprogramación
+
+--
+
+- ### Justificación
+
+--
+
+  - #### Dependencias de R
+      - **R6**
+      - **glue**
+      - **httr**
+      - **survey**
+      - **foreign**
+---
+
+class: header_background
+
+# Metaprogramación
+
+
+- ## Code is data
+
+
+.panelset[
+.panel[.panel-name[ech]
+.scroll-box-12[
+
+```{r,eval = FALSE,echo = TRUE}
+
+employment <- function(data = ech::toy_ech_2018,
+                       pobpcoac = "pobpcoac") {
+
+# checks ---
+  assertthat::assert_that(is.data.frame(data), msg = glue::glue("Sorry... :( \n  is not a data.frame"))
+  assertthat::assert_that(pobpcoac %in% names(data), msg = glue::glue("Sorry... :( \n  {popbcoac} is not in data"))
+
+# variables ---
+  data <- data %>% dplyr::mutate(pea = ifelse(pobpcoac %in% 2:5, 1, 0),
+                          pet = ifelse(pobpcoac != 1, 1, 0),
+                          po  = ifelse(pobpcoac == 2, 1, 0),
+                          pd  = ifelse(pobpcoac %in% 3:5, 1, 0),
+                          pea = haven::labelled(pea, labels = c("Si" = 1, "No" = 0),
+                                                label = "Poblacion economicamente activa"),
+                          pet = haven::labelled(pet, labels = c("Si" = 1, "No" = 0),
+                                                label = "Poblacion en edad de trabajar"),
+                          po = haven::labelled(po, labels = c("Si" = 1, "No" = 0),
+                                               label = "Poblacion ocupada"),
+                          pd = haven::labelled(pd, labels = c("Si" = 1, "No" = 0),
+                                               label = "Poblacion desocupada")
+  )
+
+  message("Variables have been created: \n \t pea (Poblacion economicamente activa);
+         pet (Poblacion en edad de trabajar);
+         po (Poblacion ocupada) &
+         pd (Poblacion desocupada)")
+  return(data)
+}
+
+```
+
+]
+
+Tomado de [github/ech] (https://github.com/calcita/ech/blob/master/R/employment.R)
+
+]
+
+.panel[.panel-name[eph]
+.scroll-box-12[
+```{r,eval = FALSE,echo = TRUE}
+
+calculate_poverty <- function(base,basket,print_summary=TRUE,window = "quarter",group_vars =c()){
+
+  base <- base %>%
+    dplyr::mutate(periodo = paste(ANO4, TRIMESTRE, sep='.')) %>%
+    dplyr::left_join(., adulto_equivalente, by = c("CH04", "CH06")) %>%
+    dplyr::left_join(., basket, by = c('REGION'="codigo", "periodo")) %>%
+    dplyr::group_by(CODUSU, NRO_HOGAR, periodo)                          %>%
+    dplyr::mutate(adequi_hogar = sum(adequi))                            %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(CBA_hogar = CBA*adequi_hogar,
+                  CBT_hogar = CBT*adequi_hogar,
+                  situacion = dplyr::case_when(ITF<CBA_hogar            ~ 'indigente',
+                                               ITF>=CBA_hogar & ITF<CBT_hogar ~ 'pobre',
+                                               ITF>=CBT_hogar           ~ 'no_pobre'),
+                  situacion = dplyr::case_when(PONDIH==0 ~ NA_character_, #excluyo los casos que no tienen respuesta en ITF
+                                               TRUE ~ situacion)) %>%
+    dplyr::select(-adequi,-periodo,-CBA, -CBT)
+
+  if (print_summary) {
+    if(window == "quarter"){
+      Pobreza_resumen <- base %>%
+        dplyr::group_by(ANO4,TRIMESTRE,dplyr::across(c({{group_vars}}))) %>%
+        dplyr::summarise(Tasa_pobreza    = sum(PONDIH[situacion %in% c('pobre', 'indigente')],na.rm = TRUE)/
+                           sum(PONDIH,na.rm = TRUE),
+                         Tasa_indigencia = sum(PONDIH[situacion == 'indigente'],na.rm = TRUE)/
+                           sum(PONDIH,na.rm = TRUE))
+    }
+    else {
+      Pobreza_resumen <- base %>%
+        dplyr::mutate(SEMESTRE = ifelse(TRIMESTRE %in% c(1,2),yes = 1,no = 2)) %>%
+        dplyr::group_by(ANO4,SEMESTRE,dplyr::across(c({{group_vars}}))) %>%
+        dplyr::summarise(Tasa_pobreza    = sum(PONDIH[situacion %in% c('pobre', 'indigente')],na.rm = TRUE)/
+                           sum(PONDIH,na.rm = TRUE),
+                         Tasa_indigencia = sum(PONDIH[situacion == 'indigente'],na.rm = TRUE)/
+                           sum(PONDIH,na.rm = TRUE))
+
+    }
+
+
+    print(Pobreza_resumen)
+
+  }
+  return(base)
+}
+
+```
+]
+
+Tomado de [github/eph] (https://github.com/holatam/eph/blob/master/R/calculate_poverty.R)
+]
+
+
+.panel[
+.panel-name[srvyuRu]
+.scroll-box-12[
+```{r,echo = TRUE,eval = FALSE}
+
+library(srvyuRu)
+
+load_base.(
+ .dir = here::here(
+   "P_2019_Terceros.sav"
+ )
+) %>%
+load_recipes_ech.(
+ .ech = "2019",
+ .recipe = "labor"
+) %>%
+set_weight.(
+  .weight = "pesoano"
+) %>%
+stats_ratio.(
+  po,
+  pd,
+  .by = c("nomdpto","e26")
+)
+
+
+```
+]
+]
+
+.panel[
+.panel-name[srvyuRu (2)]
+
+.scroll-box-12[
+```{r,echo = TRUE,eval = FALSE}
+
+library(srvyuRu)
+
+load_base.(
+ .dir = here::here(
+   "P_2019_Terceros.sav"
+ )
+) %>%
+estimate_labor_indicators.(
+ .ech = "2019",
+ .by = c("nomdpto","e26")
+)
+
+
+```
+]
+
+
+]
+
+
+.panel[
+.panel-name[srvyuRu (3)]
+
+.scroll-box-12[
+
+```{r,echo = TRUE,eval=FALSE}
+
+
+wl.Series <- get_series.(
+  srvy_name = list(
+    ech_2011 = "data-raw/ech/P_2011_TERCEROS.sav",
+    ech_2012 = "data-raw/ech/P_2012_TERCEROS.sav",
+    ech_2013 = "data-raw/ech/P_2013_Terceros.sav",
+    ech_2014 = "data-raw/ech/P_2014_Terceros.sav",
+    ech_2015 = "data-raw/ech/P_2015_Terceros.sav",
+    ech_2016 = "data-raw/ech/P_2016_Terceros.sav",
+    ech_2017 = "data-raw/ech/P_2017_Terceros.sav",
+    ech_2018 = "data-raw/ech/P_2018_Terceros.sav",
+    ech_2019 = "data-raw/ech/P_2019_Terceros.sav",
+    ech_2020 = "data-raw/ech/HyP_2020_Terceros.sav",
+    ech_2021 = c(
+        "data-raw/ech/ECH_2021_sem1_terceros.csv",
+        "data-raw/ech/ECH_07_2021.csv",
+        "data-raw/ech/ECH_08_2021.csv",
+        "data-raw/ech/ECH_09_2021.csv",
+        "data-raw/ech/ECH_10_2021.csv",
+        "data-raw/ech/ECH_11_2021.csv",
+        "data-raw/ech/ech_12_2021.csv"
+      )
+    ),
+  type = "ech",
+  easy_fun = "labor_indicators",
+  by = "genre"
+)
+
+```
+
+]
+
+
+]
+
+
+.panel[
+.panel-name[Impelementación]
+
+.scroll-box-12[
+```{r,echo = TRUE}
+
+srvyuRu::load_recipes_ech.
+
+srvyuRu::load_recipes_from_db.
+
+```
+
+]
+]
+
+]
+
+---
+
+class: header_background
+
+# Metaprogramación
+
+- ## Code is a tree
+
+```{r,echo = TRUE}
+
+lobstr::ast(1 + 2 * 3)
+
+```
+
+---
+
+class: header_background
+
+# Metaprogramación
+
+- ## Code can generate code
+
+.panelset[
+.panel[.panel-name[Crear recetas]
+
+.scroll-box-12[
+```{r,echo = TRUE}
+
+
+srvyuRu::new_recipe
+
+```
+
+]
+]
+
+
+.panel[.panel-name[Ejemplo sexo]
+.scroll-box-12[
+```{r,echo = TRUE}
+
+
+recipe_sexo <- srvyuRu::new_recipe(
+  .type = "ech",
+  .ed = 2018,
+  .formula = srvyuRu::recode(
+    e26 == 1 ~ 'Masculino',
+    TRUE ~ 'Femenino'
+  )
+)
+
+recipe_sexo
+
+
+class(recipe_sexo)
+
+```
+
+]
+
+]
+
+]
+
+---
+
+class: header_background
+
+# Justificación (propia)
+
+- ## <font color = #00000> Encuesta de actividades de innovación: <font>
+  - **Porcentaje de empresas que realizan innovación**
+  - **Porcentaje de empresas que realizan innovación por tipo de actividad**
+  - **Inversión en actividades de innovación**
+  - ...
+- ## <font color = #00000> Encuesta continua de hogares <font>
+  - **Mercado de trabajo**
+  - **Brecha de género en el mercado de trabajo**
+  - **Nivel educativo máximo alcanzado**
+
+
+
+---
+
+class: header_background
+
+# Justificación de uso público
+
+- ## <font color = #00000> Existen los microdatos, cursos de capacitación por parte del INE pero la explotación de datos no es real (a mi parecer)<font>
+- ## <font color = #00000> Uso de software no libres <font>
+- ## <font color = #00000> Reproducibibilidad de resultados <font>
+- ## <font color = #00000> Mantenimiento en el tiempo <font>
+
+
+---
+
+class: header_background
+
+# Ej: Innovación por tipo
+
+
+.panelset[
+.panel[.panel-name[eai1998-2000]
+
+.scroll-box-18[
+
+```{r,echo = TRUE,eval = FALSE}
+
+.data %<>%
+  recode(
+    producto,
+    d_111a == 1 ~ "1",
+    d_121a == 1 ~ "1",
+    d_131a == 1 ~ "1",
+    d_141a == 1 ~ "1",
+    d_151a == 1 ~ "1",
+    d_161a == 1 ~ "1",
+    TRUE ~ "0"
+  ) %>%
+  recode(
+    proceso,
+    d_112a == 1 ~ "1",
+    d_122a == 1 ~ "1",
+    d_132a == 1 ~ "1",
+    d_142a == 1 ~ "1",
+    d_152a == 1 ~ "1",
+    d_162a == 1 ~ "1",
+    d_113a == 1 ~ "1",
+    d_123a == 1 ~ "1",
+    d_133a == 1 ~ "1",
+    d_143a == 1 ~ "1",
+    d_153a == 1 ~ "1",
+    d_163a == 1 ~ "1",
+    d_114a == 1 ~ "1",
+    d_124a == 1 ~ "1",
+    d_134a == 1 ~ "1",
+    d_144a == 1 ~ "1",
+    d_154a == 1 ~ "1",
+    d_164a == 1 ~ "1",
+    TRUE ~ "0"
+  )
+
+```
+
+]
+
+]
+
+.panel[.panel-name[eai2001-2003]
+
+
+```{r,echo = TRUE,eval = FALSE}
+
+.data %<>%
+  recode(
+    producto,
+    e1_1a == 1 ~ "1",
+    TRUE ~ "0"
+  ) %>%
+  recode(
+    proceso,
+    e1_2a == 1 ~ "1",
+    e1_3a == 1 ~ "1",
+    e1_4a == 1 ~ "1",
+    TRUE ~ "0"
+  )
+
+```
+
+
+
+]
+
+.panel[.panel-name[eai2004-2006]
+
+
+```{r,echo = TRUE,eval = FALSE}
+
+.data %<>%
+  recode(
+    producto,
+    E_1_1_A == 1 ~ "1",
+    TRUE ~ "0"
+  ) %>%
+  recode(
+    proceso,
+    E_1_2_A == 1 ~ "1",
+    E_1_3_A == 1 ~ "1",
+    E_1_4_A == 1 ~ "1",
+    TRUE ~ "0"
+  )
+
+
+```
+
+
+
+]
+.panel[.panel-name[eai2007-2009]
+
+
+```{r,echo = TRUE,eval = FALSE}
+
+.data %<>%
+  recode(
+    producto,
+    E1_1_1 == 1 ~ "1",
+    TRUE ~ "0"
+  ) %>%
+  recode(
+    proceso,
+    E1_2_1 == 1 ~ "1",
+    E1_3_1 == 1 ~ "1",
+    E1_4_1 == 1 ~ "1",
+    TRUE ~ "0"
+  )
+
+
+
+```
+
+
+
+]
+
+
+.panel[.panel-name[eai2010-2012]
+
+```{r,echo = TRUE,eval = FALSE}
+
+.data %<>%
+  recode(
+    producto,
+    E1_1_1 == 1 ~ "1",
+    TRUE ~ "0"
+  ) %>%
+  recode(
+    proceso,
+    E1_2_1 == 1 ~ "1",
+    E1_3_1 == 1 ~ "1",
+    E1_4_1 == 1 ~ "1",
+    TRUE ~ "0"
+  )
+```
+
+
+]
+
+.panel[.panel-name[eai2013-2015]
+
+```{r,echo = TRUE,eval = FALSE}
+.data %<>%
+  recode(
+    producto,
+    E1_1_1 == 1 ~ "1",
+    TRUE ~ "0"
+  ) %>%
+  recode(
+    proceso,
+    E1_2_1 == 1 ~ "1",
+    E1_3_1 == 1 ~ "1",
+    E1_4_1 == 1 ~ "1",
+    TRUE ~ "0"
+  )
+```
+
+]
+
+.panel[.panel-name[eai2016-2018]
+
+
+```{r,echo = TRUE,eval = FALSE}
+.data %<>%
+  recode(
+    producto,
+    RAI_E.1_1 == 1 ~ "1",
+    TRUE ~ "0"
+  ) %>%
+  recode(
+    proceso,
+    RAI_E.1_2 == 1 ~ "1",
+    TRUE ~ "0"
+  )
+```
+
+]
+
+
+]
+
+Mas ejemplos de la EAI y de la ECH, ejemplo clave la variable sexo.
+
+
+---
+
+class: inverse,middle
+
+# Revisemos documentación
+
+
+
+---
+
+class: header_background
+
+# Problemas de Impelementación
+
+- ## <font color = #00000>  Las recetas no deberían de ser funciones... <font>
+- ## <font color = #00000>  Una base de datos estructurada (filas, columnas) no es lo adecuada por criterios de normalización y al menos en postgres para guardar texto solo tenemos las opciones de VARCHAR y TEXT. <font>
+- ## <font color = #00000>  No esta bien dejar que usuarios se conecten de forma directa a la BD por más que se tenga un usuario público. <font>
+- ## <font color = #00000>  Dependencias: Chau rlang, haven, shiny* y más <font>
+
+
+
+
+---
+
+class: inverse,middle
+
+# Que pretendo hacer
+
+---
+
+class: header_background
+
+# API Rest (with MEAN)
+
+
+.panelset[
+.panel[.panel-name[node.js y express]
+
+### Node
+
+sirve para crear sitios web dinámicos muy eficientes, escritos con el lenguaje de programación JavaScript. 
+Normalmente, los desarrolladores se decantan por este entorno de ejecución cuando buscan que los procesos se ejecuten de forma ágil y sin ningún tipo de bloqueo cuando las conexiones se multiplican.
+
+### Express
+
+
+Está diseñado para construir aplicaciones web de una sola página, multipágina e híbridas, también se ha convertido en el estándar para desarrollar aplicaciones backend con Node.js, y es la parte backend del MEAN.
+
+
+### Donde aprender 
+
+(https://www.amazon.com/REST-API-Development-Node-js-Capabilities-ebook/dp/B07G4DSSGX)[REST API Development with Node.js: Manage and Understand the Full Capabilities of Successful REST Development]
+
+]
+
+.panel[.panel-name[docker y kubernetes]
+
+## Docker
+
+Todas las implementaciones serán desarrolladas con docker, para mantener la Reproducibibilidad y la implementación en producción.
+
+(https://www.amazon.com/_/dp/1492036730?tag=oreilly20-20)[Docker: Up & Running: Shipping Reliable Containers in Production]
+
+## kubernetes
+
+Podemos generar múltiples contenedores de docker y orquestarlos, ademaás de tener la posibilidad de escalarlos generando clusters.
+
+
+(https://www.amazon.com/Kubernetes-Running-Dive-Future-Infrastructure/dp/1491935677)[Kubernetes: Up and Running: Dive into the Future of Infrastructure]
+
+]
+
+
+.panel[.panel-name[mongoDB]
+
+MongoDB es una base de datos de documentos que ofrece una gran escalabilidad y flexibilidad, y un modelo de consultas e indexación avanzado.
+
+
+### Donde aprender
+
+(https://www.amazon.com/-/es/Shannon-Bradshaw/dp/1491954469/ref=pd_bxgy_img_sccl_2/147-6846909-6469816?pd_rd_w=gGu4V&content-id=amzn1.sym.7757a8b5-874e-4a67-9d85-54ed32f01737&pf_rd_p=7757a8b5-874e-4a67-9d85-54ed32f01737&pf_rd_r=AXZ6ENP4DFZ4X9RSCMQN&pd_rd_wg=uQ4iw&pd_rd_r=8a7faffe-f29d-4be5-ac97-6e2ce9dc820e&pd_rd_i=1491954469&psc=1)[MongoDB: The Definitive Guide: Powerful and Scalable Data]
+
+
+]
+
+]
+
+
+---
+
+class: header_background
+
+# Dependencias r
+
+
+.panelset[
+.panel[.panel-name[R6]
+
+
+.scroll-box-18[
+```{r,eval = FALSE, echo = TRUE}
+
+step <- R6::R6Class(
+    "recipe",
+    public = list(
+        survey = NULL,
+        edition = NULL,
+        user = NULL,
+        dependence = NULL,
+        engine = NULL,
+        initialize = function(...) {
+            Map(
+                f = function(item) {
+                    self$add(item)
+                },
+                list(...)
+            )
+        },
+        add = function(x) {
+            private$recipe <- c(private$recipe,list(x))
+        },
+        get_name = function() self$name,
+        print = function(...) {
+            cat("Receta ", self$get_name(), " elements\n", sep = "")
+        }
+    )
+)
+```
+
+]
+]
+
+.panel[.panel-name[glue]
+
+```{r,echo = TRUE}
+
+
+
+glue::glue(
+  ".df %>%
+    {fun}(
+      {variable},
+      {formula}
+    )",
+  fun = "recode",
+  variable = "sexo",
+  formula = "e26 == 1,'Masculino',TRUE ~ 'Femenino'"
+)
+
+
+
+```
+
+
+]
+]

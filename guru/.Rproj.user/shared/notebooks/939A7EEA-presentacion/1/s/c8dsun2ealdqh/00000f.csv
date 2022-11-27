@@ -1,0 +1,20 @@
+"0",""
+"0",""
+"0",""
+"0","glue::glue("
+"0","  "".df %>%"
+"0","    {fun}("
+"0","      {variable},"
+"0","      {formula}"
+"0","    )"","
+"0","  fun = ""recode"","
+"0","  variable = ""sexo"","
+"0","  formula = ""e26 == 1,'Masculino',TRUE ~ 'Femenino'"""
+"0",")"
+"1",".df %>%
+recode(
+  sexo,
+  e26 == 1,'Masculino',TRUE ~ 'Femenino'
+)"
+"1","
+"

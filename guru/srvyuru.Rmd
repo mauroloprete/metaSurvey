@@ -1,0 +1,101 @@
+---
+type: oral   # List of types is available using latinr_types()
+language: spanish
+title: "srvyuRu"
+authors:
+  - first_name: Mauro
+    last_name: Loprete
+    email: mauroloprete1@gmail.com   # One author's email has to match the email registered in EasyChair.
+    country: uy  # List of countries available using latinr::latinr_countries()
+    affiliation: "COGNUS LATAM"
+    url: "https://www.cognus.biz/"  # Optional 
+    corresponding: true
+keywords: 
+  - "R packages"
+  - "metaprogramming"
+  - "survey sampling"
+abstract: |
+  El paquete srvyuRu pretende ser una herramienta para procesar microdatos de encuestas del Instituto Nacional de Estadística de Uruguay (INE), tanto para personas cercanas al lenguage R, como usuarios de diferentes paquetes estadísticos, como SPSS.
+  Con el paquete existe la posibilidad de generar series históricas, estimar dominios de indicadores preestablecidos, crear nuestras propias variables dentro del mismo ecosistema y realizar sus estimaciones poblacionales, utilizando código R o mediante una interfaz interactiva.
+bibliography: bib.bib
+biblio-style: apalike-es
+nocite: '@*'  
+output: 
+    latinr::latinr_article:
+      keep_tex: false
+      anonymise: false
+params: 
+  check_is_error: FALSE
+---
+
+
+```{r submission-checks, echo=FALSE, warning=TRUE}
+# Runs some basic checks in metadata. To disable, set check_is_error to FALSE
+latinr::latinr_checks(rmarkdown::metadata, params$check_is_error)
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Objetivo
+
+**{{srvyuRu}}** es un paquete desarrollado para ser una herramienta útil para usuarios con o sin experiencia en el uso de
+R. El paquete puede tener diferentes enfoques para cada tipo de usuario y complementarse con librerías comunes para la
+manipulación de datos como **{{dplyr}}** o **{{data.table}}**.
+
+Su flexibilidad se debe al enfoque de la *metaprogramación*, como se menciona en [@AdvancedR], la
+metaprogramación nos da la habilidad de cambiar la manera de hacer las cosas, nuestro código pasa a ser nuestro input y
+mediante programación podemos modificarlo de forma dinámica. Gracias a esto, es que nacen las rutinas o **recetas** que son
+una expresión de código R que una vez modificado será evaluado y aplicará diferentes rutinas a la encuesta.
+Luego, en base a la receta que apliquemos podremos realizar estimaciones poblacionales a nuestras variables objetivo.
+
+A continuación, se muestra como es posible procesar series de los principales indicadores de trabajo por sexo desde el 2011 hasta el 2021 partiendo de los [microdatos](https://www.ine.gub.uy/web/guest/encuesta-continua-de-hogares1) publicados por el INE.
+El objeto de salida es un data frame con los indicadores estimados para cada sexo y año. El mismo se presenta en la figura \ref{fig:tabla}.
+
+```{r,echo = TRUE,eval = FALSE}
+wl.Series <- get_series.(
+  srvy_name = list(
+    "2011" = "data-raw/ech/P_2011_TERCEROS.sav",
+    "2012" = "data-raw/ech/P_2012_TERCEROS.sav",
+    "2013" = "data-raw/ech/P_2013_Terceros.sav",
+    "2014" = "data-raw/ech/P_2014_Terceros.sav",
+    "2015" = "data-raw/ech/P_2015_Terceros.sav",
+    "2016" = "data-raw/ech/P_2016_Terceros.sav",
+    "2017" = "data-raw/ech/P_2017_Terceros.sav",
+    "2018" = "data-raw/ech/P_2018_Terceros.sav",
+    "2019" = "data-raw/ech/P_2019_Terceros.sav",
+    "2020" = "data-raw/ech/HyP_2020_Terceros.sav",
+    "2021" = c(
+      "data-raw/ech/ECH_2021_sem1_terceros.csv",
+      "data-raw/ech/ECH_07_2021.csv",
+      "data-raw/ech/ECH_08_2021.csv",
+      "data-raw/ech/ECH_09_2021.csv",
+      "data-raw/ech/ECH_10_2021.csv",
+      "data-raw/ech/ECH_11_2021.csv",
+      "data-raw/ech/ech_12_2021.csv"
+    )
+  ),
+  type = "ech"
+  easy_fun = "labor_indicators"
+)
+```
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=0.8\textwidth]{tabla.png}
+\caption{Tabla de indicadores de trabajo por sexo, obtenidos con srvyuRu.}
+\label{fig:tabla}
+\end{figure}
+
+El paquete aún se encuentra en desarrollo para su versión pública en CRAN, aunque ya fue utilizado en el desarrollo de un portal de datos abiertos para estimar más de 20 estimadores junto a su evolución en 31.080 dominios para
+diferentes encuestas del INE. Pronto se espera publicar el repositorio de gitlab con el código fuente y página de documentación.
+
+\newpage
+
+# Referencias y dependencias
+
+<div id="refs"></div>
+
+

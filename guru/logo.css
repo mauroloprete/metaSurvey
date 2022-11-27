@@ -4,3 +4,11 @@
     max-width: unset !important;
     max-height: unset !important;
   }
+
+
+.reveal section p {
+  display: inline-block;
+  font-size: 0.6em;
+  line-height: 1.2em;
+  vertical-align: top;
+}
