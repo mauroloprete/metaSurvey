@@ -31,14 +31,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Create index.html
-        run: mv latinR/presentacion.html latinR/index.html
+        run: mv guru/presentacion.html guru/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload entire repository
-          path: 'latinR/'
+          path: 'guru/'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
