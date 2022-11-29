@@ -286,7 +286,7 @@ srvyuRu::load_recipes_ech.
 ##         }
 ##     }) %&gt;% pull.(receta) %&gt;% rlang::parse_expr() %&gt;% rlang::eval_tidy()
 ## }
-## &lt;bytecode: 0x5574e3f311e8&gt;
+## &lt;bytecode: 0x5592464749a8&gt;
 ## &lt;environment: namespace:srvyuRu&gt;
 ```
 
@@ -314,7 +314,7 @@ srvyuRu::load_recipes_from_db.
 ##         })) %&gt;% data.table::data.table() %&gt;% pull.(receta) %&gt;% 
 ##         rlang::parse_expr() %&gt;% rlang::eval_tidy()
 ## }
-## &lt;bytecode: 0x5574e3faf450&gt;
+## &lt;bytecode: 0x5592464f2c10&gt;
 ## &lt;environment: namespace:srvyuRu&gt;
 ```
 
@@ -350,7 +350,7 @@ srvyuRu::new_recipe
 ##     expr &lt;- glue::glue(".df %&gt;% {.formula}")
 ##     rlang::new_function(args, body = expr[2], env = .GlobalEnv)
 ## }
-## &lt;bytecode: 0x5574e04d2630&gt;
+## &lt;bytecode: 0x559242a17190&gt;
 ## &lt;environment: namespace:srvyuRu&gt;
 ```
 
@@ -512,7 +512,7 @@ innovacion_tipo &lt;- srvyuRu::new_recipe(
     ),
     srvyuRu::step_recode(
       proceso,
-      if_any(
+      srvyuRu::if_any(
         e1_2a,
         e1_3a,
         e1_4a
@@ -758,7 +758,7 @@ class: header_background
 
 
 .vertical-center[
-  ## ¡Va a ser mi TFG!
+  ## ...
 ]
 
 ---

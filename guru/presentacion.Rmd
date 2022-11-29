@@ -550,7 +550,7 @@ innovacion_tipo <- srvyuRu::new_recipe(
     ),
     srvyuRu::step_recode(
       proceso,
-      if_any(
+      srvyuRu::if_any(
         e1_2a,
         e1_3a,
         e1_4a
@@ -794,7 +794,7 @@ class: header_background
 
 
 .vertical-center[
-  ## ¡Va a ser mi TFG!
+  ## ...
 ]
 
 ---
