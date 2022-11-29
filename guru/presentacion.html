@@ -47,14 +47,6 @@ class: header_background
 
 - ### Justificación
 
---
-
-  - #### Dependencias de R
-      - **R6**
-      - **glue**
-      - **httr**
-      - **survey**
-      - **foreign**
 
 --
 
@@ -294,7 +286,7 @@ srvyuRu::load_recipes_ech.
 ##         }
 ##     }) %&gt;% pull.(receta) %&gt;% rlang::parse_expr() %&gt;% rlang::eval_tidy()
 ## }
-## &lt;bytecode: 0x0000024ec2e577b0&gt;
+## &lt;bytecode: 0x5574e3f311e8&gt;
 ## &lt;environment: namespace:srvyuRu&gt;
 ```
 
@@ -322,7 +314,7 @@ srvyuRu::load_recipes_from_db.
 ##         })) %&gt;% data.table::data.table() %&gt;% pull.(receta) %&gt;% 
 ##         rlang::parse_expr() %&gt;% rlang::eval_tidy()
 ## }
-## &lt;bytecode: 0x0000024ec2eaea58&gt;
+## &lt;bytecode: 0x5574e3faf450&gt;
 ## &lt;environment: namespace:srvyuRu&gt;
 ```
 
@@ -358,7 +350,7 @@ srvyuRu::new_recipe
 ##     expr &lt;- glue::glue(".df %&gt;% {.formula}")
 ##     rlang::new_function(args, body = expr[2], env = .GlobalEnv)
 ## }
-## &lt;bytecode: 0x0000024ec310f378&gt;
+## &lt;bytecode: 0x5574e04d2630&gt;
 ## &lt;environment: namespace:srvyuRu&gt;
 ```
 
@@ -602,8 +594,7 @@ class: header_background
 # Problemas de Impelementación
 
 - ## &lt;font color = #00000&gt;  Las recetas no deberían de ser funciones... &lt;font&gt;
-- ## &lt;font color = #00000&gt;  Una base de datos relacional (filas, columnas) no es lo mejor para guardar archivos JSON, si bien postgres lo soporta &lt;font&gt;
-- ## &lt;font color = #00000&gt;  Un usuario público a la base de datos puede ser una buena idea, pero ... &lt;font&gt;
+- ## &lt;font color = #00000&gt;  Una base de datos relacional (filas, columnas) no es lo mejor para guardar archivos JSON &lt;font&gt;
 - ## &lt;font color = #00000&gt;  Dependencias: Chau rlang, haven, shiny* y más &lt;font&gt;
 - ## &lt;font color = #00000&gt;  Formalizar conceptos sobre estimadores, varianza, estimación en áreas pequeñas, confiabilidad, un largo etc &lt;font&gt;
 
@@ -777,6 +768,39 @@ class: header_background
 # Paquetes en los que me inspire o utilice
 
 
+
+```
+## [Cha21] W. Chang. _R6: Encapsulated Classes with Reference Semantics_.
+## R package version 2.5.1. 2021. URL:
+## [https://CRAN.R-project.org/package=R6](https://CRAN.R-project.org/package=R6).
+## 
+## [DS21] M. Dowle and A. Srinivasan. _data.table: Extension of
+## `data.frame`_. R package version 1.14.2. 2021. URL:
+## [https://CRAN.R-project.org/package=data.table](https://CRAN.R-project.org/package=data.table).
+## 
+## [HB22] J. Hester and J. Bryan. _glue: Interpreted String Literals_. R
+## package version 1.6.2. 2022. URL:
+## [https://CRAN.R-project.org/package=glue](https://CRAN.R-project.org/package=glue).
+## 
+## [HW22] L. Henry and H. Wickham. _rlang: Functions for Base Types and
+## Core R and 'Tidyverse' Features_. R package version 1.0.6. 2022. URL:
+## [https://CRAN.R-project.org/package=rlang](https://CRAN.R-project.org/package=rlang).
+## 
+## [Koz+20] D. Kozlowski, P. Tiscornia, et al. _eph: Argentina's Permanent
+## Household Survey Data and Manipulation Utilities_. 2020. DOI:
+## [10.5281/zenodo.3462677](https://doi.org/10.5281%2Fzenodo.3462677).
+## URL: [https://holatam.github.io/eph/](https://holatam.github.io/eph/).
+## 
+## [LP22] K. Lehmann and R. Pizarro. _calidad: Assesses the Quality of
+## Estimates Made by Complex Sample Designs_. R package version 0.3.0.
+## 2022. URL:
+## [https://CRAN.R-project.org/package=calidad](https://CRAN.R-project.org/package=calidad).
+## 
+## [MD20] G. Mathieu and R. Detomasi. _ech: Procesamiento de la Encuesta
+## Continua de Hogares de Uruguay_. R package version 0.0.2. 2020. DOI:
+## [10.5281/zenodo.3996744](https://doi.org/10.5281%2Fzenodo.3996744).
+## URL: [https://github.com/calcita/ech](https://github.com/calcita/ech).
+```
 
 
 

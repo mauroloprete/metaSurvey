@@ -97,11 +97,12 @@ knitr::knit_hooks$set(source = function(x, options) {
   hook_source(x, options)
 })
 
-# rbib <- ReadBib(
-#   here::here("packages.bib"),
-#   check = FALSE,
-#   .Encoding = "UTF-8"
-# )
+
+bib <- ReadBib(
+  "biblio.bib",
+  check = FALSE,
+  .Encoding = "UTF-8"
+)
 
 BibOptions(
   check.entries = FALSE,
@@ -127,14 +128,6 @@ class: header_background
 
 - ### Justificación
 
---
-
-  - #### Dependencias de R
-      - **R6**
-      - **glue**
-      - **httr**
-      - **survey**
-      - **foreign**
 
 --
 
@@ -641,8 +634,7 @@ class: header_background
 # Problemas de Impelementación
 
 - ## <font color = #00000>  Las recetas no deberían de ser funciones... <font>
-- ## <font color = #00000>  Una base de datos relacional (filas, columnas) no es lo mejor para guardar archivos JSON, si bien postgres lo soporta <font>
-- ## <font color = #00000>  Un usuario público a la base de datos puede ser una buena idea, pero ... <font>
+- ## <font color = #00000>  Una base de datos relacional (filas, columnas) no es lo mejor para guardar archivos JSON <font>
 - ## <font color = #00000>  Dependencias: Chau rlang, haven, shiny* y más <font>
 - ## <font color = #00000>  Formalizar conceptos sobre estimadores, varianza, estimación en áreas pequeñas, confiabilidad, un largo etc <font>
 
@@ -812,6 +804,10 @@ class: header_background
 # Paquetes en los que me inspire o utilice
 
 
+```{r,result = "asis", echo = FALSE}
+NoCite(bib)
+PrintBibliography(bib, .opts = list(bib.style = "alphabetic"))
+```
 
 
 
